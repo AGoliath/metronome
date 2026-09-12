@@ -12,6 +12,58 @@
 $ErrorActionPreference = "Continue"
 $name = $null
 
+# --- Layer 0: MME / WinMM default — the endpoint the sound ACTUALLY plays on
+# System.Media.SoundPlayer (used by the playback worker) is built on the WinMM
+# waveOut stack, whose default is device index 0 (WAVE_MAPPER). That is the
+# endpoint the click is genuinely heard on, so it takes priority over the Core
+# Audio "default" — Windows can set those two to DIFFERENT endpoints, and in
+# that case Core Audio's default (what the old code reported) was misleading.
+function Get-MmeDefaultName {
+  try {
+    $csharp = @"
+using System;
+using System.Runtime.InteropServices;
+public class MMEDefault {
+  [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+  public struct WAVEOUTCAPS {
+    public ushort wMid; public ushort wPid; public uint dwDriverVersion;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string a;
+    public uint dwFormats; public ushort wChannels; public ushort wReserved;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string b;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string c;
+  }
+  [DllImport("winmm.dll", CharSet = CharSet.Unicode)] public static extern int waveOutGetNumDevs();
+  [DllImport("winmm.dll", CharSet = CharSet.Unicode)] public static extern int waveOutGetDevCaps(uint n, out WAVEOUTCAPS caps, uint size);
+  // A "good" name has real ASCII text and no CJK/mojibake (which appears when
+  // the struct layout is off or the name is not UTF-16 clean).
+  static bool Good(string s) {
+    if (s == null) return false;
+    bool hasAscii = false, hasCjk = false;
+    foreach (char ch in s) {
+      if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9')) hasAscii = true;
+      if (ch >= 0x4E00 && ch <= 0x9FFF) hasCjk = true;
+    }
+    return hasAscii && !hasCjk;
+  }
+  public static string Name() {
+    if (waveOutGetNumDevs() == 0) return null;
+    WAVEOUTCAPS caps;
+    uint size = (uint)Marshal.SizeOf(typeof(WAVEOUTCAPS));
+    if (waveOutGetDevCaps(0, out caps, size) != 0) return null;   // index 0 = WAVE_MAPPER default
+    foreach (string s in new string[] { caps.a, caps.b, caps.c })
+      if (Good(s)) return s.Trim();
+    return null;
+  }
+}
+"@
+    Add-Type -TypeDefinition $csharp -ErrorAction Stop | Out-Null
+    $n = [MMEDefault]::Name()
+    if ($n) { return $n }
+  } catch {
+    return $null
+  }
+}
+
 # --- Layer 1: Core Audio COM API (authoritative default endpoint) -----------
 function Try-ComApi {
   try {
@@ -105,7 +157,11 @@ function Try-Registry {
   return $null
 }
 
-$name = Try-ComApi
+# Resolve in order of trust. Layer 0 is the endpoint the playback worker
+# (System.Media.SoundPlayer / WinMM) actually plays on, so it wins; the rest
+# are fallbacks for environments where the WinMM default can't be read.
+$name = Get-MmeDefaultName
+if (-not $name) { $name = Try-ComApi }
 if (-not $name) { $name = Try-Wmi }
 if (-not $name) { $name = Try-Registry }
 if (-not $name) { $name = "System default output" }
