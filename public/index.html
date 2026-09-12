@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <title>Metronome</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="app__header">
+      <h1>Metronome</h1>
+      <span id="conn" class="conn">Connecting…</span>
+    </header>
+
+    <!-- Tempo -->
+    <section class="panel">
+      <div class="panel__row">
+        <label class="panel__label">Tempo (BPM)</label>
+        <span id="bpmValue" class="panel__value">120</span>
+      </div>
+
+      <div class="bpm-controls">
+        <button id="bpmMinusBig" class="nudge" title="-5">−5</button>
+        <button id="bpmMinus" class="nudge" title="-1">−1</button>
+        <input id="bpmSlider" type="range" min="40" max="300" value="120" step="1" />
+        <button id="bpmPlus" class="nudge" title="+1">+1</button>
+        <button id="bpmPlusBig" class="nudge" title="+5">+5</button>
+      </div>
+
+      <div class="bpm-presets" role="group" aria-label="Common tempos">
+        <span class="bpm-presets__label">Quick set</span>
+        <button class="preset" data-bpm="40"  title="Largo">40</button>
+        <button class="preset" data-bpm="60"  title="Adagio (1:1 with a 60s clock)">60</button>
+        <button class="preset" data-bpm="80"  title="Andante">80</button>
+        <button class="preset" data-bpm="90"  title="Moderato">90</button>
+        <button class="preset" data-bpm="96"  title="Moderato">96</button>
+        <button class="preset" data-bpm="100" title="A common comfortable tempo">100</button>
+        <button class="preset" data-bpm="120" title="Allegro">120</button>
+        <button class="preset" data-bpm="144" title="Vivace">144</button>
+        <button class="preset" data-bpm="160" title="Fast">160</button>
+        <button class="preset" data-bpm="180" title="Presto">180</button>
+        <button class="preset" data-bpm="200" title="Very fast">200</button>
+      </div>
+
+      <div class="setlist-presets" id="setlistPresets" role="group" aria-label="Setlist presets" hidden>
+        <span class="setlist-presets__label">Setlist</span>
+      </div>
+
+      <div class="transport">
+        <button id="playBtn" class="play">▶ Play</button>
+        <button id="tapBtn" class="tap">Tap Tempo</button>
+        <span id="runHint" class="hint">Metronome is stopped</span>
+      </div>
+    </section>
+
+    <!-- Rhythm / measure -->
+    <section class="panel">
+      <div class="grid">
+        <div class="field">
+          <label for="beatsSel">Beats per measure</label>
+          <select id="beatsSel">
+            <option value="1">1 beat</option>
+            <option value="2">2 beats — 2/4</option>
+            <option value="3">3 beats — 3/4 (waltz)</option>
+            <option value="4" selected>4 beats — 4/4</option>
+            <option value="5">5 beats — 5/4</option>
+            <option value="6">6 beats</option>
+            <option value="7">7 beats</option>
+            <option value="8">8 beats</option>
+            <option value="9">9 beats — 9/8</option>
+            <option value="10">10 beats — 10/8</option>
+            <option value="12">12 beats — 12/8</option>
+            <option value="16">16 beats</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="subSel">Subdivision / rhythm</label>
+          <select id="subSel">
+            <option value="1" selected>Beats only (quarter)</option>
+            <option value="2">Eighth notes</option>
+            <option value="3">Triplets</option>
+            <option value="4">Sixteenth notes</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="beat-preview">
+        <span class="beat-preview__label">Measure</span>
+        <div id="beatDots" class="beat-dots"></div>
+      </div>
+
+      <label class="toggle accent-toggle">
+        <input type="checkbox" id="accentEvery" />
+        <span>Accent every beat (instead of only the downbeat)</span>
+      </label>
+    </section>
+
+    <!-- Sound set -->
+    <section class="panel">
+      <div class="panel__row">
+        <label class="panel__label" for="soundSetSel">Sound set</label>
+        <button id="previewBtn" class="nudge nudge--wide" title="Play a preview of tick + accent">Preview</button>
+      </div>
+      <select id="soundSetSel">
+        <option value="builtin">Built-in click</option>
+      </select>
+      <div class="soundset-hint">
+        <span class="muted">
+          Add your own: a folder with <code>tick.wav</code> (+ optional <code>accent.wav</code>)
+          in <code>sounds/</code>.
+        </span>
+        <button id="refreshSoundsBtn" class="linkish" type="button">Refresh list</button>
+      </div>
+    </section>
+
+    <!-- Feel -->
+    <section class="panel">
+      <div class="field volume">
+        <div class="panel__row">
+          <label for="volumeSlider">Volume</label>
+          <span id="volumeValue" class="panel__value">75%</span>
+        </div>
+        <input id="volumeSlider" type="range" min="0" max="100" value="75" step="1" />
+      </div>
+    </section>
+
+    <!-- Song presets -->
+    <section class="panel">
+      <div class="panel__row">
+        <label class="panel__label">Song presets</label>
+        <div class="panel__tools">
+          <button id="refreshPresetsBtn" class="linkish" type="button">Refresh</button>
+          <button id="downloadPresetsBtn" class="linkish" type="button" title="Save all presets to a JSON file">Download</button>
+          <button id="uploadPresetsBtn" class="linkish" type="button" title="Replace all presets from a JSON file">Upload</button>
+        </div>
+      </div>
+      <input id="presetFile" type="file" accept="application/json,.json" hidden />
+
+      <div class="preset-save">
+        <input id="presetName" type="text" placeholder="Name this setup (e.g. “My song”)" maxlength="60" />
+        <button id="savePresetBtn" class="save" type="button">Save preset</button>
+      </div>
+      <small class="muted">
+        Saves tempo, beats, subdivision, accent and sound set — not volume.
+      </small>
+
+      <input id="presetSearch" type="search" class="preset-search"
+        placeholder="Search presets…" aria-label="Search presets" />
+      <ul id="presetList" class="preset-list"></ul>
+      <p id="presetEmpty" class="preset-empty muted">No presets saved yet.</p>
+      <p id="presetNoMatch" class="preset-empty muted" hidden>No presets match your search.</p>
+    </section>
+
+    <!-- Sound output (played by the server) -->
+    <section class="panel">
+      <div class="panel__row">
+        <label class="panel__label">Sound output</label>
+        <span id="audioBackend" class="badge">…</span>
+      </div>
+      <div class="device">
+        <span class="device__icon" id="deviceIcon">🔊</span>
+        <div class="device__text">
+          <span id="deviceName" class="device__name">Detecting…</span>
+          <small class="muted" id="deviceHint">Played by the local server on the system default output.</small>
+        </div>
+      </div>
+    </section>
+
+    <footer class="app__footer">
+      <p>The sound is played by your local server — it keeps going even if you close this page.</p>
+      <p class="muted">Tip: press <kbd>Space</kbd> to start/stop.</p>
+    </footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

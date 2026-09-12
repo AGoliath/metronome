@@ -1,0 +1,23 @@
+{
+  "name": "metronom",
+  "version": "1.0.0",
+  "description": "A metronome that generates and plays click sounds to the system default audio output, with a simple web UI.",
+  "type": "module",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "cli": "node cli.js",
+    "sounds": "node make_soundset.mjs"
+  },
+  "keywords": [
+    "metronome",
+    "audio",
+    "music",
+    "nodejs",
+    "web"
+  ],
+  "license": "SEE LICENSE IN LICENSE"
+}

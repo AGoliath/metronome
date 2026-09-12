@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Env / local overrides
+.env
+.env.*
+!.env.example
+
+# Test / coverage output
+coverage/
+.nyc_output/
+
+# Temporary build artifacts
+dist/
+build/
+*.tsbuildinfo
+
+# User data (kept local — not part of the published project)
+presets.json

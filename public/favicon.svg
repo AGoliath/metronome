@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b3350"/>
+      <stop offset="1" stop-color="#1a2036"/>
+    </linearGradient>
+    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#232a44"/>
+      <stop offset="1" stop-color="#141a2e"/>
+    </linearGradient>
+  </defs>
+
+  <!-- rounded dark tile background -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#0f1117"/>
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="none" stroke="#2a2f3d" stroke-width="2"/>
+
+  <!-- metronome body: trapezoid (wider at base) -->
+  <path d="M28 12 L36 12 L50 52 L14 52 Z" fill="url(#body)" stroke="#4f8cff" stroke-width="2" stroke-linejoin="round"/>
+
+  <!-- inner face -->
+  <path d="M30 18 L34 18 L44 47 L20 47 Z" fill="url(#face)"/>
+
+  <!-- scale markings on the face -->
+  <g stroke="#5b6b9e" stroke-width="1.4">
+    <line x1="25" y1="40" x2="30" y2="40"/>
+    <line x1="27" y1="33" x2="31.5" y2="33"/>
+    <line x1="29" y1="26" x2="33" y2="26"/>
+  </g>
+
+  <!-- pendulum arm (tilted) with weight -->
+  <line x1="32" y1="47" x2="22" y2="24" stroke="#e7eaf2" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="22" cy="24" r="3.2" fill="#ffd54a" stroke="#141a2e" stroke-width="1"/>
+
+  <!-- musical note floating to the right -->
+  <g fill="#6ea8ff">
+    <path d="M45 22 L45 34" stroke="#6ea8ff" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M45 22 C49 24, 50 27, 49 30 C47 31, 44.5 30, 45 26 Z"/>
+    <ellipse cx="43" cy="34.5" rx="3.4" ry="2.6"/>
+  </g>
+
+  <!-- base foot -->
+  <rect x="18" y="52" width="28" height="4" rx="2" fill="#4f8cff"/>
+</svg>
