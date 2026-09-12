@@ -14,7 +14,7 @@ No build step, no native modules, no npm dependencies — just Node ≥ 22.
   <img src="./docs/screenshots/app-full.png" alt="Metronome web control panel" width="720" />
 </p>
 
-## License
+## License and Disclaimer
 
 This project is licensed for **free non-commercial use** (see the
 [`LICENSE`](./LICENSE) file). You may use, copy, modify, and redistribute it for
@@ -22,6 +22,9 @@ personal, educational, research, or hobby purposes. **Commercial use is not
 permitted** without prior, explicit written consent from the copyright holder
 — if you want to use it commercially, please reach out at
 [github.com/AGoliath](https://github.com/AGoliath) to arrange it.
+
+Please note: This is a trial project to test the new qwen3.8:27b model, run via Ollama on an RTX 5090.
+It was written entirely by agentic coding — not a single line was edited by hand on purpose. Even the smallest change was made by the AI, even where a manual edit would have been faster. I have reviewed the code and understand it, so it should be fine and safe, but I give no guarantee whatsoever.
 
 ## Quick start
 
