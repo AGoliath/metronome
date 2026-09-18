@@ -161,6 +161,11 @@
     <footer class="app__footer">
       <p>The sound is played by your local server — it keeps going even if you close this page.</p>
       <p class="muted">Tip: press <kbd>Space</kbd> to start/stop.</p>
+      <p class="muted footer-version">Version <span id="versionInfo" class="version">…</span></p>
+      <p class="muted">
+        <button id="autoUpdateBtn" class="linkish" type="button">Auto-update (git pull + restart)</button>
+        <span id="updateStatus" class="update-status"></span>
+      </p>
     </footer>
   </main>
   <script src="app.js"></script>

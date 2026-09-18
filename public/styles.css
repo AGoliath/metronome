@@ -560,6 +560,14 @@ code {
   line-height: 1.7;
 }
 .app__footer p { margin: 0; }
+.footer-version .version {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 12px;
+  color: var(--text);
+  cursor: help;
+}
+.update-status { margin-left: 8px; }
+#autoUpdateBtn:disabled { opacity: 0.6; cursor: wait; }
 kbd {
   background: var(--panel-2);
   border: 1px solid var(--border);

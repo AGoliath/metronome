@@ -16,6 +16,8 @@ const API = {
   presets: "/api/presets",
   presetsExport: "/api/presets/export",
   presetsImport: "/api/presets/import",
+  version: "/api/version",
+  update: "/api/update",
 };
 
 const state = {
@@ -512,6 +514,59 @@ function setConnection(connected) {
   }
 }
 
+// --- Version + auto-update ----------------------------------------------
+// Show the active commit (hash · date) in the footer.
+async function loadVersion() {
+  const el = $("versionInfo");
+  if (!el) return;
+  try {
+    const res = await fetch(API.version);
+    if (!res.ok) throw new Error("bad status");
+    const v = await res.json();
+    if (v.hash) {
+      const when = (v.date || "").split(" ")[0]; // "2026-09-18"
+      el.textContent = v.hash + (when ? " · " + when : "");
+      el.title = (v.subject || "") + (v.dirty ? "  (uncommitted changes)" : "");
+    } else if (v.message) {
+      el.textContent = "not a git checkout";
+      el.title = v.message;
+    }
+  } catch {
+    // Server unreachable / no git — leave whatever's already shown.
+  }
+}
+
+// Pull the newest code from the remote and restart the server.
+async function autoUpdate() {
+  const btn = $("autoUpdateBtn");
+  const status = $("updateStatus");
+  if (!btn) return;
+  const busy = () => {
+    btn.disabled = true;
+    if (status) status.textContent = "Updating… (this will reconnect briefly)";
+  };
+  if (btn.disabled) return;
+
+  if (!window.confirm("Pull the newest code from the remote and restart the server?")) return;
+  busy();
+
+  try {
+    const res = await fetch(API.update, { method: "POST" });
+    if (!res.ok) throw new Error("update failed");
+    const data = await res.json();
+    const hash = data.version && data.version.hash ? "  (now on " + data.version.hash + ")" : "";
+    if (status) status.textContent = (data.pulled ? "Updated" : "Already up to date") + hash;
+    loadVersion();
+    // The server is restarting; the SSE will drop. Re-poll health so the UI
+    // re-syncs as soon as the new instance is back up.
+    setTimeout(() => { refreshAudioInfo(); }, 1500);
+  } catch (err) {
+    if (status) status.textContent = "Update failed — see server console.";
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 // --- Wiring --------------------------------------------------------------
 document.addEventListener("DOMContentLoaded", () => {
   // Play / stop
@@ -592,11 +647,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // Auto-update
+  $("autoUpdateBtn").addEventListener("click", autoUpdate);
+
   // Init
   syncUiFromConfig();
   loadSoundSets();
   loadPresets();
   refreshAudioInfo();
+  loadVersion();
   startAudioPolling();
   connectStream();
 });

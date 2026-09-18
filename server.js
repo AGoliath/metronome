@@ -2,6 +2,7 @@ import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { execFile, spawn } from "node:child_process";
 import { generateClick, toWav, scaleSamples } from "./audio.js";
 import { audioPlayer } from "./player.js";
 import { getDeviceName } from "./device.js";
@@ -296,6 +297,68 @@ function serveStatic(req, res, url) {
 }
 
 // ---------------------------------------------------------------------------
+// Version info (git) + in-place auto-update
+// ---------------------------------------------------------------------------
+// Run a git command in the project directory and resolve its stdout.
+function runGit(args, timeout = 8000) {
+  return new Promise((resolve, reject) => {
+    execFile("git", args, { cwd: __dirname, timeout }, (err, stdout, stderr) => {
+      if (err) reject(Object.assign(err, { stderr: stderr || err.message }));
+      else resolve(stdout);
+    });
+  });
+}
+
+// Cached commit info so we don't shell out on every /api/version request.
+let versionCache = null;
+let versionCacheAt = 0;
+const VERSION_TTL_MS = 3000;
+
+async function getVersionInfo(force = false) {
+  if (!force && versionCache && Date.now() - versionCacheAt < VERSION_TTL_MS) {
+    return versionCache;
+  }
+
+  const info = { hash: null, date: null, subject: null, branch: null, dirty: false, message: null };
+  try {
+    const head = await runGit(["log", "-1", "--pretty=format:%h%x1f%ci%x1f%s"]);
+    const [h, d, s] = (head || "").split("\x1f");
+    info.hash = h || null;
+    info.date = d || null;
+    info.subject = s || null;
+    info.branch = ((await runGit(["rev-parse", "--abbrev-ref", "HEAD"])).trim()) || null;
+    info.dirty = ((await runGit(["status", "--porcelain"])) || "").trim().length > 0;
+  } catch (err) {
+    info.message = (err && err.stderr) || "Not a git repository (or git is unavailable).";
+  }
+
+  versionCache = info;
+  versionCacheAt = Date.now();
+  return info;
+}
+
+// Respawn this exact process detached, then exit. The new instance waits for
+// the port to be free (see the EADDRINUSE retry in startListening below).
+function restartServer() {
+  console.log("[metronome] Restarting to pick up the updated code\u2026");
+  stopScheduler();
+  try { audioPlayer.close(); } catch { /* ignore */ }
+  try {
+    const child = spawn(process.argv[0], process.argv.slice(1), {
+      detached: true,
+      stdio: "ignore",
+      cwd: __dirname,
+      env: process.env,
+    });
+    child.unref();
+  } catch (err) {
+    console.error("[metronome] Failed to start the replacement process:", err);
+  }
+  // Give the HTTP response time to flush before we let go of the port.
+  setTimeout(() => process.exit(0), 200);
+}
+
+// ---------------------------------------------------------------------------
 // Request router
 // ---------------------------------------------------------------------------
 const server = http.createServer(async (req, res) => {
@@ -424,6 +487,30 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, 200, { ...audioPlayer.status(), deviceName });
     }
 
+    // Active commit (hash + date) for the UI footer.
+    if (route === "GET /api/version") {
+      return sendJson(res, 200, await getVersionInfo());
+    }
+
+    // Pull the newest code from the remote, report the result, then restart the
+    // server so the freshly-checked-out code actually runs.
+    if (route === "POST /api/update") {
+      let output = "";
+      let pulled = false;
+      try {
+        output = await runGit(["pull"], 30000);
+        pulled = true;
+      } catch (err) {
+        output = (err && err.stderr) || err.message || String(err);
+      }
+      versionCache = null; // force a fresh read of the (possibly new) HEAD
+      const version = await getVersionInfo(true);
+      sendJson(res, 200, { pulled, output: (output || "").trim(), version });
+      // Let the response flush, then respawn with the new code.
+      setTimeout(restartServer, 300);
+      return;
+    }
+
     if (req.method === "GET") return serveStatic(req, res, url);
 
     res.writeHead(405, { "Content-Type": "application/json" });
@@ -434,7 +521,14 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
+// Start listening, retrying briefly if the port is still held. This makes the
+// in-place "auto-update" restart robust: the new process comes up while the
+// old one is still releasing the port.
+let listenRetries = 10;
+function startListening() {
+  server.listen(PORT);
+}
+server.on("listening", () => {
   console.log(`Metronome running at http://localhost:${PORT}`);
   console.log(`  • Sound is played by the SERVER on this machine's default audio output.`);
   console.log(`  • Keep the server running (no browser needed) for the clicks to continue.`);
@@ -447,6 +541,16 @@ server.listen(PORT, () => {
     console.log(`  • Default output device: (could not determine name)`);
   });
 });
+server.on("error", (err) => {
+  if (err && err.code === "EADDRINUSE" && listenRetries-- > 0) {
+    console.log(`[metronome] Port ${PORT} busy, retrying… (${listenRetries} left)`);
+    setTimeout(startListening, 300);
+  } else {
+    console.error(err);
+    process.exit(1);
+  }
+});
+startListening();
 
 // ---------------------------------------------------------------------------
 // Graceful shutdown: stop the scheduler and terminate the playback worker.
