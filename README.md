@@ -42,7 +42,6 @@ node cli.js bpm 96           # set tempo
 node cli.js beats 3          # 3 beats per measure
 node cli.js sub 2            # subdivide into eighths
 node cli.js accent on        # accent every beat (off = downbeat only)
-node cli.js volume 0.6       # 0..1
 node cli.js status           # show current config
 node cli.js device           # which output device is it playing on?
 node cli.js stop             # stop

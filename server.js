@@ -43,8 +43,8 @@ function sanitizeConfig(incoming) {
       next.subdivision = incoming.subdivision;
     if (typeof incoming.accentEveryBeat === "boolean")
       next.accentEveryBeat = incoming.accentEveryBeat;
-    if (typeof incoming.volume === "number" && isFinite(incoming.volume))
-      next.volume = clamp(incoming.volume, 0, 1);
+    // Volume is hardcoded to the default (see config above) and is no longer
+    // adjustable from the UI/CLI.
     // soundSet must be a currently available set id (or the built-in).
     if (typeof incoming.soundSet === "string") {
       const ids = listSoundSets().map((s) => s.id);

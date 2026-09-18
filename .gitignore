@@ -27,3 +27,6 @@ build/
 
 # User data (kept local — not part of the published project)
 presets.json
+
+# ignore german files
+ANLEITUNG.md

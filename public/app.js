@@ -469,8 +469,6 @@ function syncUiFromConfig() {
   if ($("beatsSel")) $("beatsSel").value = String(c.beatsPerMeasure);
   if ($("subSel")) $("subSel").value = String(c.subdivision);
   if ($("accentEvery")) $("accentEvery").checked = c.accentEveryBeat;
-  if ($("volumeValue")) $("volumeValue").textContent = `${Math.round(c.volume * 100)}%`;
-  if ($("volumeSlider")) $("volumeSlider").value = Math.round(c.volume * 100);
   renderBeatDots();
 }
 
@@ -561,15 +559,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Accent every beat
   $("accentEvery").addEventListener("change", (e) => applyConfig({ accentEveryBeat: e.target.checked }));
-
-  // Volume
-  $("volumeSlider").addEventListener("input", (e) => {
-    $("volumeValue").textContent = `${e.target.value}%`;
-    state.config.volume = Number(e.target.value) / 100;
-  });
-  $("volumeSlider").addEventListener("change", (e) => {
-    applyConfig({ volume: Number(e.target.value) / 100 });
-  });
 
   // Tap tempo
   const taps = [];

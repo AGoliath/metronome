@@ -8,7 +8,6 @@
 //   node cli.js beats <4>           Set beats per measure.
 //   node cli.js sub <2>             Set subdivision (1=beat 2=eighths 3=triplets 4=sixteenths).
 //   node cli.js accent <on|off>     Toggle accent-every-beat.
-//   node cli.js volume <0.7>        Set volume (0-1).
 //   node cli.js device              Show which output device the server plays on.
 //   node cli.js sounds              List the available sound sets.
 //   node cli.js set <id>            Choose the active sound set.
@@ -88,13 +87,6 @@ try {
       console.log(`Accent every beat = ${out.accentEveryBeat ? "on" : "off"}`);
       break;
     }
-    case "volume": {
-      const volume = Number(arg);
-      if (!Number.isFinite(volume)) fail("Usage: node cli.js volume <0-1>");
-      const out = await request("POST", "/api/config", { volume });
-      console.log(`Volume = ${out.volume}`);
-      break;
-    }
     case "device":
     case "audio": {
       const out = await request("GET", "/api/audio");
@@ -160,7 +152,7 @@ try {
       break;
     }
     default:
-      console.log("Commands: start | stop | status | bpm | beats | sub | accent | volume | device | sounds | set | preview | presets | apply <name>");
+      console.log("Commands: start | stop | status | bpm | beats | sub | accent | device | sounds | set | preview | presets | apply <name>");
       console.log("Example:  node cli.js bpm 96");
       console.log("          node cli.js set woodblock && node cli.js preview");
   }
@@ -179,7 +171,6 @@ function fmtConfig(c) {
     `${c.beatsPerMeasure}/measure`,
     `sub ${c.subdivision}`,
     c.accentEveryBeat ? "accent every beat" : "accent downbeat",
-    `volume ${c.volume}`,
     c.soundSet ? `sound: ${c.soundSet}` : "",
   ].filter(Boolean).join("  ·  ");
 }
