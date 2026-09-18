@@ -401,6 +401,12 @@ function connectStream() {
       if (data.config) state.config = { ...state.config, ...data.config };
       setRunning(!!data.running, { fromServer: true });
       syncUiFromConfig();
+    } else if (data.type === "config") {
+      // Server-side change (possibly made in another window / the CLI):
+      // mirror it here so all open windows stay in sync.
+      if (data.config) state.config = { ...state.config, ...data.config };
+      setRunning(!!data.running, { fromServer: true });
+      syncUiFromConfig();
     } else if (data.type === "click") {
       pulseBeat(data.inMeasure, data.level === "accent");
     }

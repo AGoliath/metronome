@@ -184,6 +184,15 @@ function emitClick(payload) {
   }
 }
 
+// Broadcast the current config to every connected UI so that a change made in
+// one browser window (or the CLI) is reflected in all of them immediately.
+function broadcastConfig() {
+  const line = `data: ${JSON.stringify({ type: "config", config, running: config.running })}\n\n`;
+  for (const writer of streamClients) {
+    try { writer.write(line); } catch { /* client gone */ }
+  }
+}
+
 function handleStream(req, res) {
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
@@ -385,18 +394,21 @@ const server = http.createServer(async (req, res) => {
     if (route === "POST /api/config") {
       const body = await readBody(req);
       Object.assign(config, sanitizeConfig(body));
+      broadcastConfig();
       return sendJson(res, 200, config);
     }
 
     if (route === "POST /api/start") {
       config.running = true;
       startScheduler();
+      broadcastConfig();
       return sendJson(res, 200, { running: true, config });
     }
 
     if (route === "POST /api/stop") {
       config.running = false;
       stopScheduler();
+      broadcastConfig();
       return sendJson(res, 200, { running: false, config });
     }
 
